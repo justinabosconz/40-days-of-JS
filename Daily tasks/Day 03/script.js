@@ -76,11 +76,11 @@ const p = 28;
 const q = 13;
 const r = 14;
 
-p > q
+p > q && p > r
   ? console.log(`${p} is highest.`)
-  : q > r
+  : q > r && q > p
   ? console.log(`${q} is highest.`)
-  : r > p
+  : r > p && r > q
   ? console.log(`${r} is highest.`)
   : console.log(`${p} is highest.`);
 
