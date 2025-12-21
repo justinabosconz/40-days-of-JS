@@ -7,10 +7,13 @@ function rockPaperScissorsGame() {
   switch (randomNum) {
     case 1:
       computerChoice = "rock";
+      break;
     case 2:
       computerChoice = "paper";
+      break;
     case 3:
       computerChoice = "scissors";
+      break;
   }
   computerChoice = computerChoice.toLowerCase();
 
