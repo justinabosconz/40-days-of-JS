@@ -1,15 +1,17 @@
 // 1. What will be the output of the following code and why?
-let user = "Alice";
+let user = "Alice"; // 1.user memory allocated 3. value assigned
 
 function outer() {
+  // 2. outer function assigned in memory
   function inner() {
-    console.log(user);
+    // 5. inner function assigned in memory
+    console.log(user); // 9. this statement gets printed and user = "Bob"
   }
-  let user = "Bob";
-  inner();
+  let user = "Bob"; // 6. user memory allocated 7. value assigned
+  inner(); // 8. inner gets executed and FCP and FEP gets created
 }
 
-outer(); // surprisingly the answer is Bob and not Alice. It's assigning the value when the funtion CP gets created.
+outer(); // 4.function gets executed and FCP and FEP gets created
 
 // 2. What is the mistake in the code below?
 let total = 0; // Global, bad practice
