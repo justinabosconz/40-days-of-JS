@@ -9,7 +9,7 @@ function outer() {
   inner();
 }
 
-outer();
+outer(); // surprisingly the answer is Bob and not Alice. It's assigning the value when the funtion CP gets created.
 
 // 2. What is the mistake in the code below?
 let total = 0; // Global, bad practice
