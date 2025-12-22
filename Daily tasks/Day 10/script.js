@@ -10,12 +10,10 @@ function outer() {
   let user = "Bob"; // 6. user memory allocated 7. value assigned
   inner(); // 8. inner gets executed and FCP and FEP gets created
 }
-
 outer(); // 4.function gets executed and FCP and FEP gets created
 
 // 2. What is the mistake in the code below?
 let total = 0; // Global, bad practice
-
 function add(num) {
   total += num;
 }
@@ -46,7 +44,6 @@ function first() {
   let name = "justina";
   console.log(name);
 }
-
 function second() {
   console.log(name);
 }
@@ -62,19 +59,15 @@ function showAge() {
   let age = 25;
   console.log(age);
 } // answer is B: Only inside showAge
-
 console.log(age);
 
 // 8. What will be the output and explain the output?
 let message = "Hello";
-
 function outer() {
   let message = "Hi";
-
   function inner() {
     console.log(message);
   }
-
   inner();
 }
 outer(); // output will be HI due to variable shadowing.
@@ -87,7 +80,6 @@ function counter() {
     console.log(count);
   };
 }
-
 const reduce = counter();
 reduce();
 reduce();
