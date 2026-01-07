@@ -2,10 +2,15 @@ function addTask() {
   const taskInput = document.getElementById("taskInput");
   const taskList = document.getElementById("taskList");
 
-  const task = taskInput.value;
+  const task = taskInput.value.trim();
 
-  let li = document.createElement("li");
-  li.innerText = task;
+  if (!task) return;
+
+  const li = document.createElement("li");
+  const span = document.createElement("span");
+  span.innerText = task;
+  li.appendChild(span);
+  //li.innerText = task;
 
   const completeButton = document.createElement("button");
   completeButton.innerText = "✔️";
@@ -27,7 +32,8 @@ function addTask() {
   editButton.innerText = "EDIT";
   editButton.style.marginLeft = "5px";
   editButton.onclick = function () {
-    li.innerText = task;
+    newText = prompt("Edit task:", span.innerText);
+    span.innerText = newText;
   };
   li.appendChild(editButton);
 
