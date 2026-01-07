@@ -32,12 +32,13 @@ function addTask() {
   editButton.innerText = "EDIT";
   editButton.style.marginLeft = "5px";
   editButton.onclick = function () {
-    newText = prompt("Edit task:", span.innerText);
-    span.innerText = newText;
+    //newText = prompt("Edit task:", span.innerText);
+    span.innerText = taskInput.value;
   };
   li.appendChild(editButton);
 
   taskList.appendChild(li);
+  //console.log(li);
 
   taskInput.value = "";
 }
