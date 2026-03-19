@@ -1,0 +1,12 @@
+table,
+td {
+  border: solid 1px black;
+}
+
+.padding-bottom {
+  padding-bottom: 50px;
+}
+
+.padding {
+  padding: 15px;
+}
