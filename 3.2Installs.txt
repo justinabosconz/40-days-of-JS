@@ -1,0 +1,14 @@
+
+npm init -y
+npm install express dotenv sequelize mysql2
+npm install socket.io   # required for realtime chat
+
+
+
+FRONTend
+
+
+npm create vite@latest client -- --template react
+cd client
+npm install
+npm install socket.io-client  # required for realtime chat

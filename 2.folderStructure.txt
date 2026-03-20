@@ -1,0 +1,69 @@
+ROOT
+
+donatehub/
+  server/
+  client/
+  docs/
+
+
+
+
+
+
+SERVER(MVC)
+server/
+  src/
+    app.js
+    server.js
+    config/
+      db.js
+    models/
+      index.js
+      User.js
+      Session.js
+      Item.js
+      ChatMessage.js
+    controllers/
+      auth.controller.js
+      items.controller.js
+      chat.controller.js
+    routes/
+      auth.routes.js
+      items.routes.js
+      chat.routes.js
+    middleware/
+      auth.middleware.js
+      cors.middleware.js
+    utils/
+      password.js
+      fileUpload.js
+  uploads/
+  tests/
+    password.test.js
+    authTokens.test.js
+  .env
+  package.json
+
+
+CLIENTREACT
+
+client/
+  src/
+    main.jsx
+    App.jsx
+    api/
+      api.js
+    context/
+      AuthContext.jsx
+      ItemsContext.jsx
+      SocketContext.jsx
+    pages/
+      LoginPage.jsx
+      ItemsPage.jsx
+      ItemDetailPage.jsx
+      AddItemPage.jsx
+    components/
+      NavBar.jsx
+      ItemCard.jsx
+      ChatBox.jsx
+    styles.css

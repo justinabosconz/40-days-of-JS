@@ -1,0 +1,12 @@
+SRC/Server
+
+
+// server.js
+// Starts HTTP server + attaches Socket.IO.
+// Socket rooms are per item: "item:<itemId>"
+
+const http = require("http");
+require("dotenv").config();
+const { Server } = require("socket.io");
+
+const { app } = require("./

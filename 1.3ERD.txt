@@ -1,0 +1,45 @@
+erDiagram
+  USERS ||--o{ ITEMS : "owns"
+  USERS ||--o{ SESSIONS : "has"
+  ITEMS ||--o{ CHAT_MESSAGES : "has"
+  USERS ||--o{ CHAT_MESSAGES : "sends"
+
+  USERS {
+    int id PK
+    varchar email UNIQUE
+    varchar displayName
+    varchar passwordHash
+    datetime createdAt
+    datetime updatedAt
+  }
+
+  SESSIONS {
+    int id PK
+    int userId FK
+    varchar token UNIQUE
+    datetime expiresAt
+    datetime createdAt
+    datetime updatedAt
+  }
+
+  ITEMS {
+    int id PK
+    int ownerId FK
+    varchar title
+    text description
+    varchar category
+    varchar itemCondition
+    varchar imagePath
+    varchar status
+    datetime createdAt
+    datetime updatedAt
+  }
+
+  CHAT_MESSAGES {
+    int id PK
+    int itemId FK
+    int fromUserId FK
+    text body
+    datetime createdAt
+    datetime updatedAt
+  }
