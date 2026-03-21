@@ -1,194 +1,61 @@
-import React, { useMemo, useState } from "react";
-import {
-  Box,
-  Container,
-  Grid,
-  Paper,
-  Typography,
-  TextField,
-  Autocomplete,
-  InputAdornment,
-  Chip,
-  Stack,
-  ToggleButton,
-  ToggleButtonGroup,
-} from "@mui/material";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
-import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
-import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { api } from "../api/api";
+import { useAuth } from "./AuthContext";
 
-import { useItems } from "../context/ItemsContext";
-import { useAuth } from "../context/AuthContext";
-import ItemCard from "../components/ItemCard";
+const ItemsContext = createContext(null);
 
-export default function ItemsPage({ onView }) {
-  const { items, loadingItems } = useItems();
-  const { user } = useAuth();
+export function ItemsProvider({ children }) {
+  const { token, loading } = useAuth();
+  const [items, setItems] = useState([]);
+  const [loadingItems, setLoadingItems] = useState(true);
 
-  // Search bar #1: category
-  const [category, setCategory] = useState("All");
+  async function refresh() {
+    setLoadingItems(true);
+    try {
+      const data = await api.listItems();
+      setItems(data);
+    } finally {
+      setLoadingItems(false);
+    }
+  }
 
-  // Search bar #2: item query (title/description)
-  const [query, setQuery] = useState("");
+  async function addItem(payload) {
+    if (!token) throw new Error("Missing auth token. Please log in again.");
+    const created = await api.createItem(token, payload);
+    setItems((prev) => [created, ...prev]);
+    return created;
+  }
 
-  // Optional toggle: all items vs my items (helps you manage edit/delete)
-  const [scope, setScope] = useState("all"); // "all" | "mine"
+  async function updateItem(id, payload) {
+    if (!token) throw new Error("Missing auth token. Please log in again.");
+    const updated = await api.updateItem(token, id, payload);
 
-  const categories = useMemo(() => {
-    const set = new Set();
-    items.forEach((i) => {
-      const c = (i.category || "").trim();
-      if (c) set.add(c);
-    });
-    return ["All", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
-  }, [items]);
+    // Update local state
+    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...updated } : i)));
+    return updated;
+  }
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+  async function deleteItem(id) {
+    if (!token) throw new Error("Missing auth token. Please log in again.");
+    await api.deleteItem(token, id);
 
-    return items.filter((i) => {
-      // Scope filter
-      const matchScope =
-        scope === "all" ? true : (i.owner?.id === user?.id);
+    // Remove locally
+    setItems((prev) => prev.filter((i) => i.id !== id));
+  }
 
-      // Category filter
-      const matchCategory =
-        category === "All"
-          ? true
-          : String(i.category || "").toLowerCase() === String(category).toLowerCase();
+  useEffect(() => {
+    if (loading) return;
+    refresh();
+  }, [loading]);
 
-      // Text query filter
-      const hay = `${i.title} ${i.description} ${i.category || ""}`.toLowerCase();
-      const matchQuery = q ? hay.includes(q) : true;
-
-      return matchScope && matchCategory && matchQuery;
-    });
-  }, [items, category, query, scope, user]);
-
-  return (
-    <Box sx={{ py: 3 }}>
-      <Container maxWidth="lg">
-        <Stack direction="row" alignItems="end" justifyContent="space-between" sx={{ mb: 2 }}>
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 900 }}>
-              Items for Donation
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Filter by category or search by item name/description.
-            </Typography>
-          </Box>
-
-          <ToggleButtonGroup
-            value={scope}
-            exclusive
-            onChange={(e, v) => v && setScope(v)}
-            size="small"
-            sx={{ bgcolor: "background.paper" }}
-          >
-            <ToggleButton value="all">
-              <Inventory2RoundedIcon fontSize="small" style={{ marginRight: 6 }} />
-              All
-            </ToggleButton>
-            <ToggleButton value="mine">
-              <PersonRoundedIcon fontSize="small" style={{ marginRight: 6 }} />
-              My items
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Stack>
-
-        {/* Filters */}
-        <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-          <Grid container spacing={2}>
-            {/* Search bar 1: Category */}
-            <Grid item xs={12} md={4}>
-              <Autocomplete
-                options={categories}
-                value={category}
-                onChange={(e, v) => setCategory(v || "All")}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Category"
-                    placeholder="All categories"
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CategoryRoundedIcon fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-
-            {/* Search bar 2: Item search */}
-            <Grid item xs={12} md={8}>
-              <TextField
-                fullWidth
-                label="Search items"
-                placeholder="Search by title or description (e.g., chair, books...)"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchRoundedIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-          </Grid>
-
-          {/* Filter chips */}
-          <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: "wrap", rowGap: 1 }}>
-            <Chip
-              label={`Scope: ${scope === "all" ? "All" : "My items"}`}
-              variant="outlined"
-            />
-            <Chip
-              label={`Category: ${category}`}
-              onDelete={() => setCategory("All")}
-              variant="outlined"
-            />
-            <Chip
-              label={query ? `Search: "${query}"` : "Search: (none)"}
-              onDelete={() => setQuery("")}
-              variant="outlined"
-            />
-            <Chip label={`${filtered.length} result(s)`} color="primary" />
-          </Stack>
-        </Paper>
-
-        {/* Items grid */}
-        <Grid container spacing={2}>
-          {loadingItems ? (
-            <Grid item xs={12}>
-              <Typography color="text.secondary">Loading items…</Typography>
-            </Grid>
-          ) : (
-            filtered.map((item) => (
-              <Grid key={item.id} item xs={12} sm={6} md={4}>
-                <ItemCard item={item} onView={onView} />
-              </Grid>
-            ))
-          )}
-
-          {!loadingItems && filtered.length === 0 && (
-            <Grid item xs={12}>
-              <Paper variant="outlined" sx={{ p: 3, textAlign: "center" }}>
-                <Typography sx={{ fontWeight: 800 }}>No results</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Try clearing filters or switching to “All”.
-                </Typography>
-              </Paper>
-            </Grid>
-          )}
-        </Grid>
-      </Container>
-    </Box>
+  const value = useMemo(
+    () => ({ items, loadingItems, refresh, addItem, updateItem, deleteItem }),
+    [items, loadingItems]
   );
+
+  return <ItemsContext.Provider value={value}>{children}</ItemsContext.Provider>;
+}
+
+export function useItems() {
+  return useContext(ItemsContext);
 }
