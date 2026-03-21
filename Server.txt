@@ -1,44 +1,48 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { api } from "../api/api";
-import { useAuth } from "./AuthContext";
+import React, { useState } from "react";
+import { useItems } from "../context/ItemsContext";
 
-const ItemsContext = createContext(null);
+export default function AddItemPage({ onDone }) {
+  const { addItem } = useItems();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [itemCondition, setItemCondition] = useState("");
+  const [imageDataUrl, setImageDataUrl] = useState("");
+  const [err, setErr] = useState("");
 
-export function ItemsProvider({ children }) {
-  const { token, loading } = useAuth();
-  const [items, setItems] = useState([]);
-  const [loadingItems, setLoadingItems] = useState(true);
+  function onPickFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setImageDataUrl(String(reader.result));
+    reader.readAsDataURL(file);
+  }
 
-  async function refresh() {
-    setLoadingItems(true);
+  async function submit(e) {
+    e.preventDefault();
+    setErr("");
     try {
-      const data = await api.listItems();
-      setItems(data);
-    } finally {
-      setLoadingItems(false);
+      await addItem({ title, description, category, itemCondition, imageDataUrl });
+      onDone();
+    } catch (e) {
+      setErr(e.message);
     }
   }
 
-  async function addItem(payload) {
-    // ✅ guard: if token missing, we KNOW Authorization header won't exist
-    if (!token) throw new Error("Auth token missing. Please log out and log in again.");
-
-    // ✅ IMPORTANT: pass token to createItem
-    const created = await api.createItem(token, payload);
-
-    setItems((prev) => [created, ...prev]);
-    return created;
-  }
-
-  useEffect(() => {
-    if (loading) return;
-    refresh();
-  }, [loading]);
-
-  const value = useMemo(() => ({ items, loadingItems, refresh, addItem }), [items, loadingItems]);
-  return <ItemsContext.Provider value={value}>{children}</ItemsContext.Provider>;
-}
-
-export function useItems() {
-  return useContext(ItemsContext);
+  return (
+    <div className="page">
+      <h2>Add Item</h2>
+      <form onSubmit={submit} className="form">
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" rows={4} />
+        <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category (optional)" />
+        <input value={itemCondition} onChange={(e) => setItemCondition(e.target.value)} placeholder="Condition (optional)" />
+        <input type="file" accept="image/*" onChange={onPickFile} />
+        {imageDataUrl && <img className="preview" src={imageDataUrl} alt="preview" />}
+        {err && <div className="error">{err}</div>}
+        <button type="submit">Create</button>
+        <button type="button" className="secondary" onClick={onDone}>Cancel</button>
+      </form>
+    </div>
+  );
 }
