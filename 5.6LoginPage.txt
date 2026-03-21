@@ -1,0 +1,49 @@
+import React, { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+
+export default function LoginPage() {
+  const { login, register } = useAuth();
+  const [mode, setMode] = useState("login"); // "login" or "register"
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
+
+  async function submit(e) {
+    e.preventDefault();
+    setErr("");
+    try {
+      if (mode === "login") await login(email, password);
+      else await register(displayName, email, password);
+    } catch (e) {
+      setErr(e.message);
+    }
+  }
+
+  return (
+    <div className="center">
+      <div className="panel">
+        <h1>DonateHub</h1>
+        <p className="muted">Lo-fi donation marketplace capstone</p>
+
+        <form onSubmit={submit} className="form">
+          {mode === "register" && (
+            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Display name" />
+          )}
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
+          {err && <div className="error">{err}</div>}
+
+          <button type="submit">{mode === "login" ? "Login" : "Register"}</button>
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setMode((m) => (m === "login" ? "register" : "login"))}
+          >
+            Switch to {mode === "login" ? "Register" : "Login"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}

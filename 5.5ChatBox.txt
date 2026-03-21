@@ -1,0 +1,74 @@
+import React, { useEffect, useRef, useState } from "react";
+import { useSocket } from "../context/SocketContext";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../api/api";
+
+export default function ChatBox({ itemId }) {
+  const { socket } = useSocket();
+  const { token, user } = useAuth();
+  const [messages, setMessages] = useState([]);
+  const [body, setBody] = useState("");
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    async function load() {
+      const history = await api.listMessages(token, itemId);
+      setMessages(history);
+    }
+    load();
+  }, [token, itemId]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit("joinItemRoom", { itemId });
+
+    const handler = (msg) => {
+      if (String(msg.itemId) === String(itemId)) {
+        setMessages((prev) => [...prev, msg]);
+      }
+    };
+
+    socket.on("newMessage", handler);
+    return () => socket.off("newMessage", handler);
+  }, [socket, itemId]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  function send() {
+    if (!body.trim()) return;
+    socket.emit("sendMessage", { itemId, body: body.trim() });
+    setBody("");
+  }
+
+  return (
+    <div className="chat">
+      <div className="chatHeader">Chat about this item</div>
+
+      <div className="chatMessages">
+        {messages.map((m) => {
+          const fromMe = (m.fromUserId ? m.fromUserId === user?.id : m.fromUser?.id === user?.id);
+          const name = m.fromUser?.displayName || "User";
+          return (
+            <div key={m.id || `${m.createdAt}-${m.body}`} className={`msg ${fromMe ? "me" : ""}`}>
+              <div className="msgMeta">{name}</div>
+              <div>{m.body}</div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
+
+      <div className="chatInput">
+        <input
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Type message..."
+        />
+        <button onClick={send}>Send</button>
+      </div>
+    </div>
+  );
+}

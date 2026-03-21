@@ -1,0 +1,35 @@
+import React, { useState } from "react";
+import { useItems } from "../context/ItemsContext";
+import ItemCard from "../components/ItemCard";
+
+export default function ItemsPage({ onView }) {
+  const { items, loadingItems } = useItems();
+  const [q, setQ] = useState("");
+
+  const filtered = items.filter((i) => {
+    const s = `${i.title} ${i.description} ${i.category || ""}`.toLowerCase();
+    return s.includes(q.toLowerCase());
+  });
+
+  return (
+    <div className="page">
+      <div className="row">
+        <input
+          className="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search items..."
+        />
+      </div>
+
+      {loadingItems ? <div className="muted">Loading...</div> : null}
+
+      <div className="list">
+        {filtered.map((item) => (
+          <ItemCard key={item.id} item={item} onView={onView} />
+        ))}
+        {!filtered.length && !loadingItems && <div className="muted">No items found</div>}
+      </div>
+    </div>
+  );
+}
