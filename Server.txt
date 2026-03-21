@@ -1,67 +1,167 @@
-// client/src/components/ItemCard.jsx
-import React from "react";
+// client/src/pages/ItemsPage.jsx
+import React, { useMemo, useState } from "react";
 import {
-  Card,
-  CardActionArea,
-  CardContent,
-  CardMedia,
+  Box,
+  Container,
+  Grid,
+  Paper,
   Typography,
+  TextField,
+  Autocomplete,
+  InputAdornment,
+  Skeleton,
   Chip,
   Stack,
-  Box,
 } from "@mui/material";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
 
-export default function ItemCard({ item, onView }) {
-  const imgSrc = item.imagePath ? `http://localhost:4000/uploads/${item.imagePath}` : null;
+import { useItems } from "../context/ItemsContext";
+import ItemCard from "../components/ItemCard";
+
+export default function ItemsPage({ onView }) {
+  const { items, loadingItems } = useItems();
+
+  // Search 1: category (null = all)
+  const [category, setCategory] = useState(null);
+
+  // Search 2: item search text (title/description)
+  const [query, setQuery] = useState("");
+
+  // Derive category list from items (dynamic)
+  const categories = useMemo(() => {
+    const set = new Set();
+    items.forEach((i) => {
+      if (i.category && String(i.category).trim()) set.add(String(i.category).trim());
+    });
+    return ["All", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items.filter((i) => {
+      const matchCategory =
+        !category || category === "All"
+          ? true
+          : String(i.category || "").toLowerCase() === String(category).toLowerCase();
+
+      const hay = `${i.title} ${i.description} ${i.category || ""}`.toLowerCase();
+      const matchQuery = q ? hay.includes(q) : true;
+
+      return matchCategory && matchQuery;
+    });
+  }, [items, category, query]);
 
   return (
-    <Card variant="outlined" sx={{ height: "100%" }}>
-      <CardActionArea onClick={() => onView(item.id)} sx={{ height: "100%" }}>
-        {imgSrc ? (
-          <CardMedia component="img" height="180" image={imgSrc} alt={item.title} />
-        ) : (
-          <Box
-            sx={{
-              height: 180,
-              display: "grid",
-              placeItems: "center",
-              bgcolor: "grey.100",
-              color: "text.secondary",
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              fontWeight: 700,
-            }}
-          >
-            No Image
-          </Box>
-        )}
+    <Box sx={{ py: 3 }}>
+      <Container maxWidth="lg">
+        <Typography variant="h5" sx={{ fontWeight: 900, mb: 1 }}>
+          Items available for donation
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Use the filters to quickly find items. Click an item to view details and chat.
+        </Typography>
 
-        <CardContent>
-          <Typography variant="subtitle1" sx={{ fontWeight: 800 }} gutterBottom noWrap>
-            {item.title}
-          </Typography>
+        {/* Filters panel */}
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2,
+            mb: 3,
+            bgcolor: "background.paper",
+          }}
+        >
+          <Grid container spacing={2} alignItems="center">
+            {/* Search Bar 1: Category */}
+            <Grid item xs={12} md={4}>
+              <Autocomplete
+                options={categories}
+                value={category || "All"}
+                onChange={(e, v) => setCategory(v)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Category"
+                    placeholder="Select a category"
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <CategoryRoundedIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </Grid>
 
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }} noWrap>
-            {item.description}
-          </Typography>
+            {/* Search Bar 2: Item search */}
+            <Grid item xs={12} md={8}>
+              <TextField
+                fullWidth
+                label="Search items"
+                placeholder="Search by title or description (e.g. chair, books...)"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchRoundedIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+          </Grid>
 
-          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", rowGap: 1 }}>
-            <Chip size="small" label={item.category || "Uncategorised"} />
-            <Chip size="small" variant="outlined" label={item.itemCondition || "Condition: N/A"} />
+          {/* Active filter chips */}
+          <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: "wrap", rowGap: 1 }}>
             <Chip
-              size="small"
-              color={item.status === "AVAILABLE" ? "success" : "default"}
-              variant={item.status === "AVAILABLE" ? "filled" : "outlined"}
-              label={item.status || "AVAILABLE"}
+              label={`Category: ${category || "All"}`}
+              onDelete={() => setCategory("All")}
+              variant="outlined"
             />
+            <Chip
+              label={query ? `Search: "${query}"` : "Search: (none)"}
+              onDelete={() => setQuery("")}
+              variant="outlined"
+            />
+            <Chip label={`${filtered.length} result(s)`} color="primary" variant="filled" />
           </Stack>
+        </Paper>
 
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1.2 }}>
-            Owner: {item.owner?.displayName || "Unknown"}
-          </Typography>
-        </CardContent>
-      </CardActionArea>
-    </Card>
+        {/* Items grid */}
+        <Grid container spacing={2}>
+          {loadingItems
+            ? Array.from({ length: 6 }).map((_, idx) => (
+                <Grid key={idx} item xs={12} sm={6} md={4}>
+                  <Paper variant="outlined" sx={{ p: 2 }}>
+                    <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+                    <Skeleton sx={{ mt: 1 }} />
+                    <Skeleton width="60%" />
+                  </Paper>
+                </Grid>
+              ))
+            : filtered.map((item) => (
+                <Grid key={item.id} item xs={12} sm={6} md={4}>
+                  <ItemCard item={item} onView={onView} />
+                </Grid>
+              ))}
+
+          {!loadingItems && filtered.length === 0 && (
+            <Grid item xs={12}>
+              <Paper variant="outlined" sx={{ p: 3, textAlign: "center" }}>
+                <Typography sx={{ fontWeight: 800 }}>No results</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Try selecting “All” categories or clearing the search text.
+                </Typography>
+              </Paper>
+            </Grid>
+          )}
+        </Grid>
+      </Container>
+    </Box>
   );
 }
 ``
