@@ -1,9 +1,24 @@
-PS C:\Users\justi\OneDrive\Documents\Capstone\DONaid\client> rmdir /s node_modules
-Remove-Item : A positional parameter cannot be found that accepts argument 'node_modules'.
-At line:1 char:1
-+ rmdir /s node_modules
-+ ~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : InvalidArgument: (:) [Remove-Item], ParameterBindingException
-    + FullyQualifiedErrorId : PositionalParameterNotFound,Microsoft.PowerShell.Commands.RemoveItemCommand
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+(!) Failed to run dependency scan. Skipping dependency pre-bundling. Error: The following dependencies are imported but could not be resolved:
 
-PS C:\Users\justi\OneDrive\Documents\Capstone\DONaid\client> 
+  @mui/material/styles (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/theme.js)
+  @mui/material/CssBaseline (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/main.jsx)
+  @mui/material (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/components/ChatBox.jsx)
+  @mui/icons-material/AddPhotoAlternateRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/pages/AddItemPage.jsx)
+  @mui/icons-material/LockRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/pages/LoginPage.jsx)
+  @mui/icons-material/SaveRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/pages/AddItemPage.jsx)
+  @mui/icons-material/CloseRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/pages/AddItemPage.jsx)
+  @mui/icons-material/VolunteerActivismRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/components/NavBar.jsx)
+  @mui/icons-material/ArrowBackRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/pages/ItemDetailPage.jsx)
+  @mui/icons-material/PersonAddAltRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/pages/LoginPage.jsx)
+  @mui/icons-material/SearchRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/pages/ItemsPage.jsx)
+  @mui/icons-material/CategoryRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/pages/ItemsPage.jsx)
+  @mui/icons-material/AddRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/components/NavBar.jsx)
+  @mui/icons-material/LogoutRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/components/NavBar.jsx)
+  @mui/icons-material/SendRounded (imported by C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/src/components/ChatBox.jsx)
+
+Are they installed?
+    at file:///C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/node_modules/vite/dist/node/chunks/node.js:31227:33
+    at async file:///C:/Users/justi/OneDrive/Documents/Capstone/DONaid/client/node_modules/vite/dist/node/chunks/node.js:23088:15
