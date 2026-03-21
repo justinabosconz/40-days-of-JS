@@ -1,6 +1,0 @@
-flowchart LR
-  A[React Frontend\n(AuthContext, Items, Chat)] -->|REST JSON| B[Express API\nMVC Controllers + Routes]
-  A -->|Socket.IO| C[Socket.IO Server]
-  B --> D[(MySQL\nSequelize Models)]
-  B --> E[/uploads\nSaved Images/]
-  C --> D
