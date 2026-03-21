@@ -1,12 +1,29 @@
-PS C:\Users\justi\OneDrive\Documents\Capstone\DONaid\server> npm run dev
+// client/src/api/api.js
+// Central fetch helper for the React app.
+// IMPORTANT: Adds Authorization header when token is provided.
 
-> server@1.0.0 dev
-> node src/server.js
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000/api";
 
-[dotenv@17.3.1] injecting env (9) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
-[dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
-[dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
-✅ DB authenticated
-✅ DB synced
-✅ Server running on http://localhost:4000
-✅ Socket.IO enabled (origin: http://localhost:5173)
+export async function apiFetch(path, { token, method = "GET", body } = {}) {
+  const headers = {};
+
+  // Only send JSON header when we send a body
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+
+  // ✅ Add auth header (this is what your backend requires)
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    // ignore if response has no JSON
+  }
+
+  if
