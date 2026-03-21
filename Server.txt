@@ -1,105 +1,114 @@
-// client/src/pages/ItemDetailPage.jsx
-import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Container,
-  Paper,
-  Typography,
-  Button,
-  Chip,
-  Stack,
-  Divider,
-} from "@mui/material";
-import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
-import { api } from "../api/api";
-import ChatBox from "../components/ChatBox";
+// client/src/components/ChatBox.jsx
+import React, { useEffect, useRef, useState } from "react";
+import { Paper, Typography, Box, TextField, Button, Stack } from "@mui/material";
+import SendRoundedIcon from "@mui/icons-material/SendRounded";
 
-export default function ItemDetailPage({ itemId, onBack }) {
-  const [item, setItem] = useState(null);
-  const [err, setErr] = useState("");
+import { useSocket } from "../context/SocketContext";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../api/api";
+
+export default function ChatBox({ itemId }) {
+  const { socket } = useSocket();
+  const { token, user } = useAuth();
+
+  const [messages, setMessages] = useState([]);
+  const [body, setBody] = useState("");
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     async function load() {
-      try {
-        const data = await api.getItem(itemId);
-        setItem(data);
-      } catch (e) {
-        setErr(e.message);
-      }
+      const history = await api.listMessages(token, itemId);
+      setMessages(history);
     }
     load();
-  }, [itemId]);
+  }, [token, itemId]);
 
-  if (err) {
-    return (
-      <Box sx={{ py: 3 }}>
-        <Container maxWidth="md">
-          <Paper variant="outlined" sx={{ p: 3 }}>
-            <Typography sx={{ fontWeight: 900 }}>Could not load item</Typography>
-            <Typography variant="body2" color="text.secondary">{err}</Typography>
-            <Button sx={{ mt: 2 }} variant="outlined" onClick={onBack} startIcon={<ArrowBackRoundedIcon />}>
-              Back
-            </Button>
-          </Paper>
-        </Container>
-      </Box>
-    );
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit("joinItemRoom", { itemId });
+
+    const handler = (msg) => {
+      if (String(msg.itemId) === String(itemId)) {
+        setMessages((prev) => [...prev, msg]);
+      }
+    };
+
+    socket.on("newMessage", handler);
+    return () => socket.off("newMessage", handler);
+  }, [socket, itemId]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  function send() {
+    if (!body.trim()) return;
+    socket.emit("sendMessage", { itemId, body: body.trim() });
+    setBody("");
   }
 
-  if (!item) return <Box sx={{ py: 3 }}><Container maxWidth="md"><Typography>Loading...</Typography></Container></Box>;
-
-  const imgSrc = item.imagePath ? `http://localhost:4000/uploads/${item.imagePath}` : null;
-
   return (
-    <Box sx={{ py: 3 }}>
-      <Container maxWidth="md">
-        <Button variant="outlined" onClick={onBack} startIcon={<ArrowBackRoundedIcon />}>
-          Back
-        </Button>
+    <Paper variant="outlined" sx={{ p: 2 }}>
+      <Typography sx={{ fontWeight: 900, mb: 1 }}>Chat</Typography>
 
-        <Paper variant="outlined" sx={{ p: 3, mt: 2 }}>
-          {imgSrc && (
+      <Box
+        sx={{
+          height: 260,
+          overflowY: "auto",
+          pr: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          mb: 1.5,
+        }}
+      >
+        {messages.map((m) => {
+          const fromMe = (m.fromUserId ? m.fromUserId === user?.id : m.fromUser?.id === user?.id);
+          const name = m.fromUser?.displayName || "User";
+
+          return (
             <Box
-              component="img"
-              src={imgSrc}
-              alt={item.title}
+              key={m.id || `${m.createdAt}-${m.body}`}
               sx={{
-                width: "100%",
-                maxHeight: 360,
-                objectFit: "cover",
+                alignSelf: fromMe ? "flex-end" : "flex-start",
+                maxWidth: "80%",
+                bgcolor: fromMe ? "primary.main" : "grey.100",
+                color: fromMe ? "white" : "text.primary",
                 borderRadius: 2,
+                px: 1.5,
+                py: 1,
                 border: "1px solid",
-                borderColor: "divider",
-                mb: 2,
+                borderColor: fromMe ? "primary.main" : "divider",
               }}
-            />
-          )}
+            >
+              <Typography variant="caption" sx={{ opacity: fromMe ? 0.9 : 0.8 }}>
+                {name}
+              </Typography>
+              <Typography variant="body2">{m.body}</Typography>
+            </Box>
+          );
+        })}
+        <div ref={bottomRef} />
+      </Box>
 
-          <Typography variant="h6" sx={{ fontWeight: 900 }}>
-            {item.title}
-          </Typography>
-
-          <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap", rowGap: 1 }}>
-            <Chip label={item.category || "Uncategorised"} />
-            <Chip variant="outlined" label={item.itemCondition || "Condition: N/A"} />
-            <Chip label={item.status || "AVAILABLE"} color="primary" variant="outlined" />
-          </Stack>
-
-          <Typography variant="body1" sx={{ mt: 2 }}>
-            {item.description}
-          </Typography>
-
-          <Divider sx={{ my: 2 }} />
-
-          <Typography variant="body2" color="text.secondary">
-            Owner: <strong>{item.owner?.displayName}</strong> ({item.owner?.email})
-          </Typography>
-        </Paper>
-
-        <Box sx={{ mt: 2 }}>
-          <ChatBox itemId={item.id} />
-        </Box>
-      </Container>
-    </Box>
+      <Stack direction="row" spacing={1}>
+        <TextField
+          fullWidth
+          placeholder="Type a message…"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              send();
+            }
+          }}
+        />
+        <Button variant="contained" onClick={send} endIcon={<SendRoundedIcon />}>
+          Send
+        </Button>
+      </Stack>
+    </Paper>
   );
 }
