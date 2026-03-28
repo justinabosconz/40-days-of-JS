@@ -1,0 +1,36 @@
+1. Overview
+DonateHub is a lightweight donation marketplace web application.
+Core features
+
+User registration + login
+Create donation listings (title, description, category, condition, image)
+Browse and search available donation items
+Message donors about items (implemented using Server‑Sent Events)
+
+2. Business problem
+Many households have usable items they no longer need, while others cannot easily afford replacements. A simple platform for local donation reduces waste and helps communities.
+3. Stakeholders
+
+Donors: post items and coordinate handover
+Recipients: browse items and request via message
+Community groups/charities: source items
+Admins (future): moderation and reporting
+
+4. Value
+
+Lower landfill waste and carbon impact
+Improves access to essential household goods
+Strengthens community support networks
+
+5. Non-functional requirements
+
+Simple, lo-fi UI (fast to learn)
+Runs locally in development
+No extra backend npm dependencies beyond: express, dotenv, sequelize, mysql2
+
+6. Architecture
+6.1 High-level
+
+Frontend: minimal React (via CDN) + Context for global state
+Backend: Express MVC + Sequelize ORM
+Database: MySQL (Workbench) at localhost:3306
