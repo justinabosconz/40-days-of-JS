@@ -115,3 +115,62 @@ Just let me know.
 
 Here’s a single paragraph you can read out loud for ~4 minutes that explains the architecture and end‑to‑end flow of DONaid, aligned with what you built (React + MUI frontend, Express MVC backend, Sequelize/MySQL persistence, token auth, uploads for images, Socket.IO real‑time chat). [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
 DONaid follows a clear client–server architecture where the React frontend is responsible for the user interface and user interactions, and the Node.js backend provides the business logic, data persistence, and real‑time messaging.  On the client side, the user opens the application and interacts with pages such as login, sign up, the items list, and the item detail view; the UI is built with React and Material UI, and state is coordinated using Context so authentication state, items data, and chat behavior remain consistent across the app.  The first part of the flow is authentication: when a user registers, the backend creates a new user record and stores the password securely as a salted hash, and when the user logs in successfully, the backend generates a session token and returns it to the frontend.  From that point onward, the frontend attaches that token on protected requests using the HTTP header format Authorization: Bearer <token>, and the backend validates that token against a session record before allowing access to protected endpoints.  The “standard” application operations use REST JSON calls from the frontend to the Express API: for example, fetching the items list, opening a specific item detail, creating an item, updating it, deleting it, and retrieving historical chat messages for an item all run as REST requests handled by Express routes and controllers in an MVC structure.  Inside the backend, Express routes forward requests to controllers, controllers apply validation and business rules, and then data operations are executed through Sequelize models, which act as the ORM layer that translates JavaScript operations into SQL queries for MySQL.  In terms of data design, the database is centered around four core entities: Users represent the accounts, Sessions store session tokens and expiry details for logged-in users, Items store donation listings and link each listing to its owner, and ChatMessages store item-based messages linked to both a specific item and the sending user; this relationship structure ensures that ownership rules and item-specific conversations are enforceable at the database level and consistent across the application.  The item listing flow is a good example of the end-to-end pipeline: when a logged-in user submits the “add item” form, the frontend sends a POST request to the items endpoint with the item details and the authentication token; the controller verifies the token, confirms the request is valid, and creates the item record associated with the authenticated user.  If the item includes an image, the backend saves the file into an uploads directory on the server and stores the filename or path in the database; later, when the items list or detail page renders, the frontend retrieves the image via a standard HTTP static file request like GET /uploads/<filename>, so images load efficiently without embedding raw image bytes in every API response.  For update and delete, the backend enforces an important business rule: only the item owner can edit or remove the listing; the frontend surfaces edit/delete controls only for the owner, and the backend also checks ownership server-side, returning an authorization error if a non-owner attempts to modify the item.  The real-time communication flow is handled separately from REST because chat needs low-latency updates: when a user opens the item detail page and starts a conversation, the frontend connects to Socket.IO, joins an item-specific “room,” and sends messages as Socket.IO events; the backend Socket.IO handler receives the event, persists the message to MySQL through Sequelize so the conversation is not lost on refresh, and then broadcasts a “new message” event to other connected clients in the same room so they see the message instantly.  At the same time, the app also supports reliability through REST-based chat history: when the item detail page loads, the frontend can fetch existing messages using a REST history endpoint, and Socket.IO handles only the new live messages after that, combining persistence with real-time responsiveness.  Finally, the architecture is supported by a testing strategy that validates the backend behavior and business rules: automated tests using Jest and Supertest confirm that authentication works, CRUD operations behave correctly, and owner-only permissions are enforced; coverage reporting then provides evidence of test execution and helps identify untested branches, which strengthens confidence in correctness and maintainability.  In summary, the flow is: the React UI collects user actions, REST endpoints handle structured data operations, Socket.IO handles real-time chat events, Sequelize provides consistent data access, MySQL stores the persistent system state, and uploads provide file storage for images—together delivering a complete donation workflow from sign up to listing, discovery, and coordinated messaging.
+
+
+******************************************************************************************
+
+Product / Problem Questions
+1) What problem does DONaid solve?
+Answer: DONaid reduces donation friction by giving people one place to list items, browse available donations, and coordinate pickup through item‑specific messaging—reducing waste and supporting community reuse. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+2) Who is the target user?
+Answer: The main users are donors posting items and recipients browsing items; community groups are a potential future stakeholder. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+3) What makes your app different from Facebook Marketplace / other platforms?
+Answer: It’s purpose-built for donations, with structured listings and item‑specific chat, and it enforces owner‑only edits/deletes for cleaner coordination and better trust. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+
+✅ Architecture / Technical Questions
+4) Can you explain your architecture in one sentence?
+Answer: React + MUI handles the UI, Express MVC provides REST endpoints, Sequelize stores data in MySQL, images are served from an uploads folder, and Socket.IO provides real‑time chat per item. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+5) Why did you choose MVC on the backend?
+Answer: MVC makes the backend easier to maintain because routes, controllers, and models are separated—so changes to business logic don’t break routing or database logic. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+6) Why use Sequelize instead of raw SQL?
+Answer: Sequelize speeds up development by mapping models and relationships to MySQL tables and provides consistent CRUD operations without writing SQL for every query. [DONaid Pro...esentation | PowerPoint]
+7) Why use Socket.IO for chat instead of REST polling?
+Answer: Socket.IO supports low‑latency, event‑based updates, so messages appear instantly without refreshing; messages are still persisted in the database for history. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+8) How do you handle images?
+Answer: The server saves uploaded images in an /uploads folder and stores the filename/path in the Items record, then the frontend loads images via GET /uploads/<filename>. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+
+✅ Security / Auth Questions
+9) How does login/authentication work?
+Answer: On login the server returns a session token, and the client sends it on protected requests using Authorization: Bearer <token>; the backend validates the token against sessions. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+10) How do you prevent users from editing other users’ items?
+Answer: The backend checks ownership: only the item owner can update/delete; non‑owners get a 403 response. The UI also hides Edit/Delete buttons for non‑owners. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+11) How are passwords stored?
+Answer: Passwords are stored as salted hashes—never plain text—so even if the DB was accessed, original passwords are not directly readable. [DONaid Pro...esentation | PowerPoint]
+12) What’s a risk in your current security approach?
+Answer: It’s a capstone MVP, so future improvements could include rate limiting, stronger session management, and more production hardening like HTTPS and secure storage for uploads. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+
+✅ Database / ERD Questions
+13) Why do you have a Sessions table?
+Answer: Sessions store tokens and expiry, enabling login persistence and allowing the backend to validate tokens for protected endpoints. [DONaid Pro...esentation | PowerPoint]
+14) How is chat linked in the database?
+Answer: Each chat message is linked to an item (itemId) and the sender (fromUserId), so conversations remain item‑specific and traceable. [DONaid Pro...esentation | PowerPoint]
+
+✅ Testing / Quality Questions
+15) What did you test, and how?
+Answer: I used Jest and Supertest to automate API tests for authentication, item CRUD, and authorization rules, and generated a coverage report; I also did manual UI testing for key flows. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+16) What’s one example of an edge case you tested?
+Answer: Login with invalid credentials returns 401, and updating/deleting an item as a non-owner returns 403—these confirm both authentication and authorization rules. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+17) Why use a separate test database?
+Answer: To isolate automated tests from development data so tests can run repeatedly without corrupting real items/users. [DONaid Pro...esentation | PowerPoint]
+
+✅ UI / UX Questions
+18) What UX improvements did you make near the end?
+Answer: I improved filtering with a dedicated sidebar and search, added owner-only edit/delete controls, and fixed scroll behavior so item details open at the correct top position under the sticky AppBar. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+19) Is your design lo‑fi or hi‑fi?
+Answer: The early wireframes were lo‑fi for planning, but the final implementation is high‑fidelity because it uses Material UI styling and production‑style components. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+
+✅ Future / Reflection Questions
+20) If you had two more weeks, what would you add?
+Answer: Admin moderation/reporting, better privacy for chat, multiple images per listing, and deployment readiness like CI/CD and production file storage. [DONaid Pro...esentation | PowerPoint], [DONaid Pro...esentation | PowerPoint]
+21) What was your biggest challenge?
+Answer: Ensuring token/session handling was consistent across requests and user switching, and polishing UX details like sticky layouts and scroll behavior.
