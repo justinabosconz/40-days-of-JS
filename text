@@ -1,36 +1,113 @@
-1. Overview
-DonateHub is a lightweight donation marketplace web application.
-Core features
+1. React Frontend (User Interaction Layer)
+What this is:
+The React Frontend is what the user sees and interacts with in the browser. It is built with React, Vite, and Material UI, and uses Context for state management.
+Key responsibilities:
+•	Display the UI (login, items list, item detail, chat)
+•	Manage state using: 
+o	AuthContext (user + token)
+o	Items context (item data)
+o	Chat context (real-time messaging)
+From here, all actions start.
+________________________________________
+2. Authentication Flow (Bearer Token)
+Flow:
+1.	The user logs in or registers.
+2.	The backend returns a session token.
+3.	The frontend stores this token.
+4.	For protected actions, the frontend sends requests with: 
+5.	Authorization: Bearer <token>
+Why this matters:
+This ensures that only authenticated users can:
+•	Create items
+•	Edit or delete their own items
+•	Access chat features
+This is shown in the diagram as the “Auth header – Authorization: Bearer token” flowing from the frontend to the backend.
+________________________________________
+3. REST API Flow (Standard Requests)
+Flow:
+•	The React Frontend sends REST JSON requests to the Node.js server.
+Examples of REST endpoints:
+•	/auth/* – login, register, me, logout
+•	/items – create, read, update, delete items
+•	/chat/:itemId/messages – fetch chat history
+What happens:
+•	Requests go to the Node.js Server
+•	Express routes pass the request to controllers
+•	Controllers apply business logic and validation
+This is represented by the REST JSON arrows in the diagram.
+________________________________________
+4. Node.js Server (Express + Socket.IO)
+Important clarification (final version):
+The diagram correctly shows that Express and Socket.IO run in the same Node.js HTTP server, not in separate servers.
+The server does two jobs:
+1.	Express API – handles REST requests
+2.	Socket.IO – handles real-time messaging
+This design keeps the architecture simpler and more efficient.
+________________________________________
+5. Sequelize ORM Layer (Data Access)
+What this is:
+Sequelize is the Object Relational Mapping layer that sits between the backend and the database.
+Models shown in the diagram:
+•	User
+•	Session
+•	Item
+•	ChatMessage
+Flow:
+•	Express controllers and Socket.IO handlers use Sequelize models.
+•	Sequelize translates JavaScript operations into SQL queries.
+•	Queries are sent to MySQL.
+This is shown as Read / Write SQL Queries from Sequelize to MySQL.
+________________________________________
+6. MySQL Database (Persistence Layer)
+What is stored here:
+•	Users and their credentials (hashed passwords)
+•	Sessions (login tokens and expiry)
+•	Items (donation listings)
+•	Chat messages (linked to items and users)
+Why it’s important:
+•	All application state is persisted.
+•	Chat messages remain available even after page refresh or reconnect.
+________________________________________
+7. Real Time Chat Flow (Socket.IO)
+Flow:
+1.	The frontend connects to Socket.IO.
+2.	The user joins an item specific room (joinItemRoom).
+3.	Messages are sent using sendMessage.
+4.	The server: 
+o	Saves the message to the database via Sequelize.
+o	Emits newMessage to all users in the room.
+Purpose:
+•	Enables instant messaging without page refresh.
+•	Keeps chat conversations scoped to a specific item.
+This is why chat is shown as a separate real time flow, not part of REST.
+________________________________________
+8. Image Upload & Serving Flow
+Upload flow:
+1.	The user uploads an item image.
+2.	The image is sent to the backend.
+3.	The Node.js server saves the file to the /uploads folder.
+4.	The image file path is stored in the database.
+Serve flow:
+•	The frontend requests images via: 
+•	GET /uploads/<filename>
+•	The server serves the static image file.
+This is why the /uploads folder is shown as a separate file storage component in the diagram.
+________________________________________
+9. Overall End to End Flow Summary
+In simple terms:
+1.	The user interacts with the React frontend.
+2.	REST requests and Socket.IO events are sent to the Node.js server.
+3.	The server processes logic using MVC controllers and Socket.IO handlers.
+4.	Data is stored and retrieved using Sequelize and MySQL.
+5.	Images are handled via the uploads folder.
+6.	Responses, data, images, and real time updates flow back to the frontend.
+________________________________________
+How to say this in one sentence (for class)
+“The React frontend communicates with a single Node.js server using REST for standard operations and Socket.IO for real time chat, while data is persisted through Sequelize into a MySQL database and images are served from a static uploads folder.”
+________________________________________
+If you want, I can also:
+•	Shorten this into a 30 second explanation
+•	Turn this into bullet points for a slide
+•	Rewrite it in assessment friendly academic language
+Just let me know.
 
-User registration + login
-Create donation listings (title, description, category, condition, image)
-Browse and search available donation items
-Message donors about items (implemented using Server‑Sent Events)
-
-2. Business problem
-Many households have usable items they no longer need, while others cannot easily afford replacements. A simple platform for local donation reduces waste and helps communities.
-3. Stakeholders
-
-Donors: post items and coordinate handover
-Recipients: browse items and request via message
-Community groups/charities: source items
-Admins (future): moderation and reporting
-
-4. Value
-
-Lower landfill waste and carbon impact
-Improves access to essential household goods
-Strengthens community support networks
-
-5. Non-functional requirements
-
-Simple, lo-fi UI (fast to learn)
-Runs locally in development
-No extra backend npm dependencies beyond: express, dotenv, sequelize, mysql2
-
-6. Architecture
-6.1 High-level
-
-Frontend: minimal React (via CDN) + Context for global state
-Backend: Express MVC + Sequelize ORM
-Database: MySQL (Workbench) at localhost:3306
